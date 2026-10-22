@@ -4,9 +4,11 @@ import { google } from "@ai-sdk/google";
 // To swap providers later, change only this import and the env var name.
 // Example: replace `google(...)` with `anthropic(...)` or `groq(...)` and set
 // the matching API key in Vercel; the API route and chat component do not change.
-export const model = google("gemini-2.5-flash");
+// Google recently retired the older 2.5 model for new users, so we use the current
+// supported free-tier model instead. The app still remains provider-swappable via this module.
+export const model = google("gemini-3.8-flash");
 
-// Gemini 2.5 Flash is a strong default for a lightweight study tutor because it
+// Gemini 3.8 Flash is a strong default for a lightweight study tutor because it
 // balances quality, speed, and free-tier affordability. The temperature is kept
 // low enough for stable explanations, but not so cold that answers feel robotic.
 export const aiConfig = {

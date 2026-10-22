@@ -22,8 +22,8 @@ function getFriendlyErrorMessage(error: unknown): string {
   if (/429|rate limit|too many requests/i.test(value)) {
     return "Too many requests, try again in a moment.";
   }
-  if (/api key|missing.*key|not configured/i.test(value)) {
-    return "The AI service is not configured. Please try again later.";
+  if (/401|403|invalid api key|unauthorized|forbidden|api key|missing.*key|not configured/i.test(value)) {
+    return "The AI service could not authenticate. Check your Google Gemini API key.";
   }
 
   return value;

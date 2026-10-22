@@ -17,6 +17,37 @@ function buildErrorResponse(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
+function getErrorStatus(error: unknown): number {
+  if (typeof error === "object" && error !== null && "status" in error) {
+    const status = Number((error as { status?: number }).status);
+    if (!Number.isNaN(status)) return status;
+  }
+
+  const text = error instanceof Error ? error.message : String(error ?? "");
+  if (/401|unauthorized|invalid api key|api key|forbidden|403/i.test(text)) return 401;
+  if (/429|rate limit|too many requests/i.test(text)) return 429;
+
+  return 500;
+}
+
+function getErrorMessage(error: unknown): string {
+  const text = error instanceof Error ? error.message : String(error ?? "");
+
+  if (/401|unauthorized|invalid api key|api key|forbidden|403/i.test(text)) {
+    return "The AI service could not authenticate. Check your Google Gemini API key.";
+  }
+
+  if (/429|rate limit|too many requests/i.test(text)) {
+    return "Too many requests, try again in a moment.";
+  }
+
+  if (/failed to fetch|network|fetch/i.test(text)) {
+    return "The AI service is temporarily unavailable. Please try again in a moment.";
+  }
+
+  return "Something went wrong while preparing the AI response.";
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
@@ -55,13 +86,9 @@ export async function POST(request: Request) {
 
     return result.toUIMessageStreamResponse();
   } catch (error) {
-    const rateLimited = isRateLimitError(error);
+    console.error("Chat route error:", error);
 
-    return buildErrorResponse(
-      rateLimited
-        ? "Too many requests, try again in a moment."
-        : "Something went wrong while preparing the AI response.",
-      rateLimited ? 429 : 500,
-    );
+    const status = getErrorStatus(error);
+    return buildErrorResponse(getErrorMessage(error), status);
   }
 }
